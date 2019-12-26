@@ -22,14 +22,15 @@ class ActNorm(torch.jit.ScriptModule):
         self._check_input_dim(x)
         if x.dim() > 2:
             x = x.transpose(1, -1)
-        shape = x.shape
-        x = x.reshape(-1, shape[-1])
         if not self.__initialized:
-            self.scale.data = 1 / x.detach().std(0, unbiased=False)
-            self.bias.data = -self.scale * x.detach().mean(0)
+            self.scale.data = 1 / x.detach().reshape(-1, x.shape[-1]).std(
+                0, unbiased=False
+            )
+            self.bias.data = -self.scale * x.detach().reshape(
+                -1, x.shape[-1]
+            ).mean(0)
             self.__initialized = True
         x = self.scale * x + self.bias
-        x = x.reshape(shape)
         if x.dim() > 2:
             x = x.transpose(1, -1)
         return x

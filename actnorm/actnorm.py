@@ -25,8 +25,8 @@ class ActNorm(torch.jit.ScriptModule):
         shape = x.shape
         x = x.reshape(-1, shape[-1])
         if not self.__initialized:
-            self.scale.data = 1 / x.std(0, unbiased=False)
-            self.bias.data = -self.scale * x.mean(0)
+            self.scale.data = 1 / x.detach().std(0, unbiased=False)
+            self.bias.data = -self.scale * x.detach().mean(0)
             self.__initialized = True
         x = self.scale * x + self.bias
         x = x.reshape(shape)

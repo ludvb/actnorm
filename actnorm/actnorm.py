@@ -9,10 +9,10 @@ class ActNorm(torch.jit.ScriptModule):
         super().__init__()
         self.scale = torch.nn.Parameter(torch.zeros(num_features))
         self.bias = torch.nn.Parameter(torch.zeros(num_features))
-        self.__initialized = False
+        self.register_buffer("_initialized", torch.tensor(False))
 
     def reset_(self):
-        self.__initialized = False
+        self._initialized = torch.tensor(False)
         return self
 
     def _check_input_dim(self, x: torch.Tensor) -> None:
@@ -22,14 +22,14 @@ class ActNorm(torch.jit.ScriptModule):
         self._check_input_dim(x)
         if x.dim() > 2:
             x = x.transpose(1, -1)
-        if not self.__initialized:
+        if not self._initialized:
             self.scale.data = 1 / x.detach().reshape(-1, x.shape[-1]).std(
                 0, unbiased=False
             )
             self.bias.data = -self.scale * x.detach().reshape(
                 -1, x.shape[-1]
             ).mean(0)
-            self.__initialized = True
+            self._initialized = torch.tensor(True)
         x = self.scale * x + self.bias
         if x.dim() > 2:
             x = x.transpose(1, -1)
